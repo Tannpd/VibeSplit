@@ -1,0 +1,18 @@
+# React Frontend Build & Dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Python compiled files
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Operating system logs & metadata
+.DS_Store
+Thumbs.db
