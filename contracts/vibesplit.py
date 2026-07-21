@@ -1,11 +1,5 @@
 # v0.2.16
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-
-# =============================================================================
-#  vibesplit.py — VibeSplit: Decentralized Music Copyright Arbitration
-#  GenLayer Intelligent Contract (v0.2.16)
-# =============================================================================
-
 from genlayer import *
 import json
 
@@ -29,7 +23,7 @@ def to_address(val) -> Address:
 
 class Contract(gl.Contract):
     """
-    VibeSplit — Decentralized Music Copyright Arbitration
+    VibeSplit - Decentralized Music Copyright Arbitration
     =====================================================
     A decentralized arbitration contract for independent musicians. When an artist
     accuses another of plagiarizing their song, both lock a stake in the contract.
@@ -54,15 +48,15 @@ class Contract(gl.Contract):
     dispute_original_split:   TreeMap[u64, u256]      # 0 to 100 percentage going to original artist
     dispute_analysis:         TreeMap[u64, str]       # Musicological analysis breakdown
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # CONSTRUCTOR
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     def __init__(self) -> None:
         self.disputes_count = 0
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # PUBLIC WRITE: CREATE DISPUTE
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     @gl.public.write.payable
     def create_dispute(self, accused_artist: Address, original_url: str, accused_url: str) -> int:
         """
@@ -96,9 +90,9 @@ class Contract(gl.Contract):
         self.disputes_count = int(did) + 1
         return int(did)
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # PUBLIC WRITE: JOIN DISPUTE
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     @gl.public.write.payable
     def join_dispute(self, dispute_id: int) -> None:
         """
@@ -124,9 +118,9 @@ class Contract(gl.Contract):
         self.dispute_status[dispute_id] = "PENDING"
         self.dispute_analysis[dispute_id] = "Both stakes locked. Dispute is ready for AI musicologist arbitration."
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # PUBLIC WRITE: RESOLVE DISPUTE WITH SPECTRUM CONSENSUS
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     @gl.public.write
     def resolve_dispute(self, dispute_id: int) -> None:
         """
@@ -150,7 +144,7 @@ class Contract(gl.Contract):
         self.dispute_status[dispute_id] = "PENDING"
         self.dispute_analysis[dispute_id] = "AI Musicologist nodes are analyzing dynamic song breakdowns..."
 
-        # ── Non-Deterministic Execution block ───────────────────────────
+        # --- Non-Deterministic Execution block ----------------------------
         def leader_fn() -> str:
             # 1. Scrape Original URL
             try:
@@ -265,18 +259,15 @@ Do NOT wrap the JSON in markdown code blocks. Do NOT add any extra text or conve
         def validator_fn(leader_result) -> bool:
             """
             Proportional Spectrum Validator: Achieves consensus on a spectrum.
-            Verifies the leader's proposal has the correct format and keys.
-            To prevent consensus failure due to LLM non-determinism in the simulator environment,
-            the validator accepts the leader's output as long as it is well-formed.
+            1. Nodes must agree on the boolean 'is_plagiarism' decision.
+            2. Nodes must agree on the royalty split within a 10% margin (abs difference <= 10).
             """
             try:
-                # Convert bytes to string if needed to avoid TypeError on find()
                 if isinstance(leader_result, bytes):
                     result_str = leader_result.decode('utf-8', errors='ignore')
                 else:
                     result_str = str(leader_result)
 
-                # Robustly extract JSON substring to bypass any GenVM ABI serialization prefix bytes (e.g. \x00\xbc.)
                 start_idx = result_str.find('{')
                 end_idx = result_str.rfind('}')
                 if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
@@ -287,9 +278,41 @@ Do NOT wrap the JSON in markdown code blocks. Do NOT add any extra text or conve
                 return False
 
             if "error" in leader_data:
-                return True
+                allowed_errors = {"ORIGINAL_URL_SCRAPE_FAILED", "ACCUSED_URL_SCRAPE_FAILED", "INSUFFICIENT_DATA", "LLM_EXECUTION_FAILED", "JSON_PARSE_FAILED"}
+                return any(err in str(leader_data.get("error", "")) for err in allowed_errors)
 
-            return "is_plagiarism" in leader_data and "original_artist_split" in leader_data
+            validator_raw = leader_fn()
+            try:
+                if isinstance(validator_raw, bytes):
+                    val_str = validator_raw.decode('utf-8', errors='ignore')
+                else:
+                    val_str = str(validator_raw)
+                val_start = val_str.find('{')
+                val_end = val_str.rfind('}')
+                if val_start == -1 or val_end == -1 or val_start > val_end:
+                    return False
+                cleaned_val = val_str[val_start:val_end+1]
+                validator_data = json.loads(cleaned_val)
+            except Exception:
+                return False
+
+            if "error" in validator_data:
+                return False
+
+            leader_plag = bool(leader_data.get("is_plagiarism", False))
+            validator_plag = bool(validator_data.get("is_plagiarism", False))
+
+            if leader_plag != validator_plag:
+                return False
+
+            leader_split = int(leader_data.get("original_artist_split", 0))
+            validator_split = int(validator_data.get("original_artist_split", 0))
+
+            diff = leader_split - validator_split
+            if diff < 0:
+                diff = -diff
+
+            return diff <= 10
 
         # Run consensus
         consensus_json = gl.vm.run_nondet_unsafe(leader_fn, validator_fn)
@@ -335,9 +358,9 @@ Do NOT wrap the JSON in markdown code blocks. Do NOT add any extra text or conve
             other_b = gl.get_contract_at(accused_artist)
             other_b.emit_transfer(value=u256(payout_accused))
 
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     # READ-ONLY VIEW METHODS
-    # ═══════════════════════════════════════════════════════════════════
+    # ===================================================================
     @gl.public.view
     def get_dispute(self, dispute_id: int) -> str:
         """
