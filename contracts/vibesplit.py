@@ -9,6 +9,24 @@
 from genlayer import *
 import json
 
+def to_address(val) -> Address:
+    """
+    Ensures input addresses are represented as pure Address structures,
+    protecting against string/int input deserialization issues in GenLayer Studio UI.
+    """
+    if isinstance(val, Address):
+        return val
+    if isinstance(val, int):
+        return Address(f"0x{val:040x}")
+    if isinstance(val, str):
+        if val.startswith("0x"):
+            return Address(val)
+        try:
+            return Address(f"0x{int(val):040x}")
+        except Exception:
+            return Address(val)
+    return Address(str(val))
+
 class Contract(gl.Contract):
     """
     VibeSplit — Decentralized Music Copyright Arbitration
@@ -45,7 +63,7 @@ class Contract(gl.Contract):
     # ═══════════════════════════════════════════════════════════════════
     # PUBLIC WRITE: CREATE DISPUTE
     # ═══════════════════════════════════════════════════════════════════
-    @gl.public.write
+    @gl.public.write.payable
     def create_dispute(self, accused_artist: Address, original_url: str, accused_url: str) -> int:
         """
         Original artist calls this, locks an initial stake, and designates the accused artist.
@@ -65,7 +83,7 @@ class Contract(gl.Contract):
         did = self.disputes_count
 
         self.dispute_original_artist[did] = gl.message.sender_address
-        self.dispute_accused_artist[did] = accused_artist
+        self.dispute_accused_artist[did] = to_address(accused_artist)
         self.dispute_original_stake[did] = amount
         self.dispute_accused_stake[did] = 0
         self.dispute_original_url[did] = original_url.strip()
@@ -81,7 +99,7 @@ class Contract(gl.Contract):
     # ═══════════════════════════════════════════════════════════════════
     # PUBLIC WRITE: JOIN DISPUTE
     # ═══════════════════════════════════════════════════════════════════
-    @gl.public.write
+    @gl.public.write.payable
     def join_dispute(self, dispute_id: int) -> None:
         """
         Accused artist calls this and matches the original artist's stake.
@@ -249,24 +267,25 @@ Do NOT wrap the JSON in markdown code blocks. Do NOT add any extra text or conve
             Proportional Spectrum Validator: Achieves consensus on a spectrum.
             1. Nodes must agree on the boolean 'is_plagiarism' decision.
             2. Nodes must agree on the royalty split within a 10% margin (abs difference <= 10).
+            3. Error states must be consistent: if one node fails, both must agree on failure.
             """
             try:
                 leader_data = json.loads(leader_result)
             except Exception:
                 return False
 
-            if "error" in leader_data:
-                allowed_errors = {"ORIGINAL_URL_SCRAPE_FAILED", "ACCUSED_URL_SCRAPE_FAILED", "INSUFFICIENT_DATA", "LLM_EXECUTION_FAILED", "JSON_PARSE_FAILED"}
-                return any(err in str(leader_data.get("error", "")) for err in allowed_errors)
-
             validator_raw = leader_fn()
             try:
                 validator_data = json.loads(validator_raw)
             except Exception:
-                return True  # Abstain on local node issues
+                return False
 
-            if "error" in validator_data:
-                return True
+            # If either node has an error, they must both have an error to agree on failure
+            leader_has_error = "error" in leader_data
+            validator_has_error = "error" in validator_data
+
+            if leader_has_error or validator_has_error:
+                return leader_has_error and validator_has_error
 
             leader_plag = bool(leader_data.get("is_plagiarism", False))
             validator_plag = bool(validator_data.get("is_plagiarism", False))
