@@ -262,7 +262,7 @@ Do NOT wrap the JSON in markdown code blocks. Do NOT add any extra text or conve
                     "musicological_analysis": f"AI response was not valid JSON: {cleaned}"
                 })
 
-        def validator_fn(leader_result: str) -> bool:
+        def validator_fn(leader_result) -> bool:
             """
             Proportional Spectrum Validator: Achieves consensus on a spectrum.
             Verifies the leader's proposal has the correct format and keys.
@@ -270,12 +270,18 @@ Do NOT wrap the JSON in markdown code blocks. Do NOT add any extra text or conve
             the validator accepts the leader's output as long as it is well-formed.
             """
             try:
+                # Convert bytes to string if needed to avoid TypeError on find()
+                if isinstance(leader_result, bytes):
+                    result_str = leader_result.decode('utf-8', errors='ignore')
+                else:
+                    result_str = str(leader_result)
+
                 # Robustly extract JSON substring to bypass any GenVM ABI serialization prefix bytes (e.g. \x00\xbc.)
-                start_idx = leader_result.find('{')
-                end_idx = leader_result.rfind('}')
+                start_idx = result_str.find('{')
+                end_idx = result_str.rfind('}')
                 if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
                     return False
-                cleaned_result = leader_result[start_idx:end_idx+1]
+                cleaned_result = result_str[start_idx:end_idx+1]
                 leader_data = json.loads(cleaned_result)
             except Exception:
                 return False
