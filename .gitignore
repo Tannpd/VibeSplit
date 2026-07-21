@@ -16,3 +16,9 @@ frontend/.env.production.local
 # Operating system logs & metadata
 .DS_Store
 Thumbs.db
+
+# Virtual Environment & Python Dev Dependencies
+.venv/
+.pytest_cache/
+artifacts/
+
