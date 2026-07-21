@@ -1,87 +1,75 @@
-# VibeSplit — Decentralized Music Copyright Arbitration
+# VibeSplit - Decentralized Music Copyright Arbitration Primitive
 
-**VibeSplit** is a decentralized royalty escrow and copyright arbitration intelligent contract built on GenLayer that protects independent musicians against plagiarism disputes and resolves fair splits transparently.
-
-## ⚡ The Pitch: Why VibeSplit DIES without GenLayer
-
-On traditional blockchains (Ethereum, Solana, etc.), smart contracts are fully deterministic and isolated from the outside world. This makes VibeSplit **impossible** to build because:
-1. **No External Scraped Data**: Traditional contracts cannot access web pages or scrape dynamic lyric/track breakdown pages directly.
-2. **Oracle Centralization**: Relying on standard web-scraping oracles introduces a single point of failure and centralized manipulation.
-3. **No Native AI Processing**: Differentiating between creative "Inspiration" and blatant "Plagiarism" requires qualitative, natural language musicological analysis of melodies, structures, and rhythms. Traditional chains cannot run large language models on-chain.
-
-**GenLayer solves all of this.** By using non-deterministic calls (`gl.nondet.web.render` and `gl.nondet.exec_prompt`) executed by a decentralized network of nodes, GenLayer allows the contract to:
-- Directly read live lyrics and expert musicological blogs from the submitted track URLs.
-- Feed the comparative descriptions into an AI "Musicologist Copyright Judge" to evaluate progression patterns and similarities.
-- Run a custom consensus validator that accepts qualitative splits on a spectrum ($\pm 10\%$ split margin tolerance) while maintaining absolute boolean agreement on the final plagiarism decision.
+**VibeSplit** is an Intelligent Contract built on GenLayer that implements a decentralized copyright arbitration and royalty escrow primitive. It enables independent musicians to open plagiarism disputes, lock stakes, and utilize on-chain AI and non-deterministic web scrapers to resolve royalty splits fairly and transparently.
 
 ---
 
-## 🛠️ Project Structure
+## The Pitch: Why VibeSplit Requires GenLayer
 
-```
-VibeSplit/
-├── contracts/
-│   └── vibesplit.py         # GenLayer Intelligent Smart Contract (v0.2.16)
-├── frontend/                # Neon Synthwave DJ Mixer Deck Dashboard (React + Vite)
-└── README.md                # Documentation
-```
+On traditional blockchains (Ethereum, Solana, etc.), smart contracts cannot access the web or execute non-deterministic AI evaluation. GenLayer makes VibeSplit possible by utilizing a decentralized consensus network that can:
+1. **Access Web Content**: Directly fetch dynamic lyric/track breakdown pages via `gl.nondet.web.render`.
+2. **Execute AI Reasoning**: Feed metadata and lyrical/progression summaries into a natural language LLM consensus round (`gl.nondet.exec_prompt`).
+3. **Consensus on Meaning**: Run a custom validator that verifies the **meaning** of the decision (absolute agreement on plagiarism vs. inspiration and a split margin tolerance of <= 10%), rejecting format-only validation.
 
 ---
 
-## 🚀 How to Deploy on GenLayer Studio
+## How Consensus & Custom Validation Works
 
-1. **Access GenLayer Studio**: Open the GenLayer Studio developer environment.
-2. **Create Contract File**: Create a new file named `vibesplit.py` under the contracts section.
-3. **Paste Code**: Copy the contents of [vibesplit.py](contracts/vibesplit.py) and paste it into the editor.
-4. **Deploy**: Build and deploy the contract using the Studio interface. Save the returned contract address.
-
----
-
-## 🖥️ How to Run the Frontend Dashboard
-
-1. **Navigate to Frontend**:
-   ```bash
-   cd frontend
-   ```
-2. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
-3. **Configure Environment**:
-   Create a `.env` file in the `frontend` folder and set your deployed contract address:
-   ```env
-   VITE_CONTRACT_ADDRESS=0xD55e691F328f88DB07A4588EE6e9365ad8Bb5E2b
-   ```
-4. **Launch Dev Server**:
-   ```bash
-   npm run dev
-   ```
-5. **Open Browser**: Open your browser to the local address displayed (e.g., `http://localhost:5173`) to access the Neon Audio Forensic Lab.
+Unlike naive contract validators that only verify JSON formatting, VibeSplit enforces **meaning-based consensus**:
+- **Independent Node Evaluation**: Each validator runs its own scrape and LLM musicological analysis.
+- **Decision Agreement**: Validators must reach absolute agreement on the boolean plagiarism verdict (`is_plagiarism`).
+- **Split Proportional Tolerance**: The proposed royalty split percentage (`original_artist_split`) must match within a `10%` absolute margin.
+- **Rejection on Meaning Mismatch**: If two validators reach different musicological decisions or their split estimates diverge beyond `10%`, the validator votes `Disagree`, rejecting the leader proposal and triggering leader rotation. Format-only compliance is insufficient to pass consensus.
 
 ---
 
-## 🌐 How to Push to GitHub & Deploy to Vercel
+## Public API Specification
 
-### 1. Push to GitHub
-Open your terminal in the root directory `D:\Gen\VibeSplit` and run:
-```bash
-git init
-git add .
-git commit -m "feat: initial commit for VibeSplit dApp"
-# Create a new public repository on GitHub and link it:
-git remote add origin https://github.com/your-username/vibe-split.git
-git branch -M main
-git push -u origin main
-```
+### State Variables
+- `disputes_count`: Total number of copyright disputes created.
+- `dispute_original_artist`: Address of the claimant/original artist.
+- `dispute_accused_artist`: Address of the defendant/accused artist.
+- `dispute_original_url`/`dispute_accused_url`: Scrape targets for the tracks.
+- `dispute_status`: `"CREATED"`, `"PENDING"`, `"RESOLVED"`, or `"FAILED"`.
+- `dispute_original_stake`/`dispute_accused_stake`: GEN escrow pool amounts.
+- `dispute_is_plagiarism`: Consensus verdict.
+- `dispute_original_split`: Split percentage allocated to the original artist.
+- `dispute_analysis`: Consolidated musicological consensus writeup.
 
-### 2. Deploy to Vercel
-Deploy the frontend directly to Vercel using the Vercel CLI:
-```bash
-cd frontend
-npm install -g vercel
-vercel login
-vercel --prod
-```
-During the setup, configure the production environment variable:
-- Key: `VITE_CONTRACT_ADDRESS`
-- Value: `0xD55e691F328f88DB07A4588EE6e9365ad8Bb5E2b`
+### Write Methods
+- `create_dispute(accused_artist: Address, original_url: str, accused_url: str) -> int` (payable): Opens a dispute, locking the claimant's initial stake.
+- `join_dispute(dispute_id: int)` (payable): Defendant locks a matching stake.
+- `resolve_dispute(dispute_id: int)`: Triggers GenVM multi-validator consensus to evaluate the track metadata and distribute escrowed funds.
+
+### View Methods
+- `get_dispute(dispute_id: int) -> str`: Returns a JSON representation of dispute details.
+- `get_disputes_count() -> int`: Returns the total number of disputes.
+
+---
+
+## Deployment Evidence
+
+- **Contract Address**: `0xc7fe2C750756b07DA54a95AEC7D741F0D9554698`
+- **Network**: `studionet`
+
+### Worked Example Call
+
+#### Input Parameters (`resolve_dispute` call for Dispute #0):
+- **Original Artist**: `0x8aB6Fd746F8928E116fd14850DE855a8A10eea13` (Staked `10.0 GEN`)
+- **Accused Artist**: `0x0A2750043B217267493b4bb5B856107840361b8e` (Staked `10.0 GEN`)
+- **Original URL**: `https://raw.githubusercontent.com/Tannpd/VibeSplit/master/tests/mock_original_song.txt`
+- **Accused URL**: `https://raw.githubusercontent.com/Tannpd/VibeSplit/master/tests/mock_disputed_song.txt`
+
+#### Real Consensus Output (Transaction Details from Studio Explorer):
+- **Status**: `FINALIZED`
+- **Verdict**:
+  ```json
+  {
+    "is_plagiarism": true,
+    "original_artist_split": 90,
+    "musicological_analysis": "The disputed track reproduces the most legally protectable elements of the original song with near-total fidelity: sharing the identical chord progression in the same key, and the exact melodic chorus hook. The lyrics are only superficially altered..."
+  }
+  ```
+- **Escrow Distribution**:
+  - `18.0 GEN` paid out to Original Artist (90% of `20.0 GEN` pool).
+  - `2.0 GEN` paid out to Accused Artist (10% of `20.0 GEN` pool).
