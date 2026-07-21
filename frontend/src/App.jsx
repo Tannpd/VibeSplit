@@ -251,8 +251,8 @@ export default function App() {
             <button 
               className="preset-strip"
               onClick={() => setPreset(
-                'https://www.musicologistblogs.org/case-melodic-plagiarism-sample',
-                'https://www.musicologistblogs.org/case-melodic-plagiarism-copycat',
+                'https://raw.githubusercontent.com/Tannpd/VibeSplit/master/tests/mock_original_song.txt',
+                'https://raw.githubusercontent.com/Tannpd/VibeSplit/master/tests/mock_disputed_song.txt',
                 '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
               )}
             >
@@ -266,8 +266,8 @@ export default function App() {
             <button 
               className="preset-strip"
               onClick={() => setPreset(
-                'https://www.musicologistblogs.org/case-homage-chord-progression',
-                'https://www.musicologistblogs.org/case-homage-chord-progression-homage',
+                'https://raw.githubusercontent.com/Tannpd/VibeSplit/master/tests/mock_inspiration_original.txt',
+                'https://raw.githubusercontent.com/Tannpd/VibeSplit/master/tests/mock_inspiration_accused.txt',
                 '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
               )}
             >
@@ -281,8 +281,8 @@ export default function App() {
             <button 
               className="preset-strip"
               onClick={() => setPreset(
-                'https://www.musicologistblogs.org/track-pop-acoustic-ballad',
-                'https://www.musicologistblogs.org/track-heavy-metal-anthem',
+                'https://raw.githubusercontent.com/Tannpd/VibeSplit/master/tests/mock_unrelated_original.txt',
+                'https://raw.githubusercontent.com/Tannpd/VibeSplit/master/tests/mock_unrelated_accused.txt',
                 '0x90F79bf6EB2c4f870365E785982E1f101E93b906'
               )}
             >
