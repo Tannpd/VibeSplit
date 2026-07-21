@@ -200,15 +200,17 @@ Please perform a rigorous musicological comparison:
 1. LYRICS & RHYTHMS: Are there exact phrasing duplicates, unique poetic repetitions, or identical syncopation patterns?
 2. MELODIC/HARMONIC STRUCTURE: Is there a significant progression similarity (e.g. sharing identical hook melodies, chord shifts, or key signatures)?
 3. INTENTIONALITY: Differentiate between a creative homage/fair-use "Inspiration" (which represents new artistic elements) and lazy "Plagiarism" (copying core hooks without creative addition).
-4. ROYALTY SPLIT: Determine a fair split percentage (original_artist_split) from 0 to 100.
-   - If there is blatant plagiarism, the original artist split should be high (e.g. 70% to 100%).
-   - If it is fair inspiration, original artist split should be low (e.g. 10% to 40%).
-   - If they are completely unrelated or fair use, original artist split should be 0%.
+4. ROYALTY SPLIT: Determine a fair split percentage (original_artist_split).
+   - You MUST choose exactly one of these three values:
+     * 90 (if you determine there is blatant plagiarism).
+     * 30 (if you determine there is creative homage/inspiration).
+     * 0 (if you determine they are completely unrelated or safe).
+   - Do NOT choose any other split percentage.
 
 Your output MUST be a single, valid JSON object with EXACTLY the following keys:
 {{
   "is_plagiarism": true | false,
-  "original_artist_split": <int between 0 and 100>,
+  "original_artist_split": 90 | 30 | 0,
   "musicological_analysis": "<2-3 sentences summarizing the melodic/lyrical comparison and split rationale>"
 }}
 Do NOT wrap the JSON in markdown code blocks. Do NOT add any extra text or conversation. Only return the raw JSON."""
