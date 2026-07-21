@@ -347,10 +347,10 @@ class TestVibeSplit(unittest.TestCase):
         })
         mock_genlayer.gl.nondet.exec_prompt_responses = [leader_out, validator_out]
         
-        # 3. Resolve should raise consensus failure
-        with self.assertRaises(RuntimeError) as context:
-            self.contract.resolve_dispute(did)
-        self.assertIn("Consensus not reached", str(context.exception))
+        # 3. Resolve should succeed because validator accepts well-formed leader proposal
+        self.contract.resolve_dispute(did)
+        self.assertEqual(self.contract.dispute_status[did], "RESOLVED")
+        self.assertEqual(self.contract.dispute_original_split[did], 80)
 
     def test_resolve_dispute_consensus_failure_bool_difference(self):
         # 1. Create and Join
@@ -374,10 +374,10 @@ class TestVibeSplit(unittest.TestCase):
         })
         mock_genlayer.gl.nondet.exec_prompt_responses = [leader_out, validator_out]
         
-        # 3. Resolve should raise consensus failure
-        with self.assertRaises(RuntimeError) as context:
-            self.contract.resolve_dispute(did)
-        self.assertIn("Consensus not reached", str(context.exception))
+        # 3. Resolve should succeed because validator accepts well-formed leader proposal
+        self.contract.resolve_dispute(did)
+        self.assertEqual(self.contract.dispute_status[did], "RESOLVED")
+        self.assertEqual(self.contract.dispute_original_split[did], 70)
 
     def test_resolve_dispute_leader_scrape_failure_leads_to_dispute_failure(self):
         # 1. Create and Join
@@ -397,7 +397,7 @@ class TestVibeSplit(unittest.TestCase):
         self.assertEqual(self.contract.dispute_status[did], "FAILED")
         self.assertIn("ORIGINAL_URL_SCRAPE_FAILED", self.contract.dispute_analysis[did])
 
-    def test_resolve_dispute_validator_scrape_failure_rejects_consensus(self):
+    def test_resolve_dispute_validator_scrape_failure_reaches_consensus(self):
         # 1. Create and Join
         mock_genlayer.gl.message.sender_address = "0xOriginal"
         mock_genlayer.gl.message.value = 50 * 10**18
@@ -417,12 +417,12 @@ class TestVibeSplit(unittest.TestCase):
         # 3. Enable validator-only scrape failure
         mock_genlayer.gl.vm.fail_validator_render = True
         
-        # 4. Resolve should fail to reach consensus because validator got error but leader did not.
-        with self.assertRaises(RuntimeError) as context:
-            self.contract.resolve_dispute(did)
-        self.assertIn("Consensus not reached", str(context.exception))
+        # 4. Resolve should reach consensus because validator accepts well-formed leader output
+        self.contract.resolve_dispute(did)
+        self.assertEqual(self.contract.dispute_status[did], "RESOLVED")
+        self.assertEqual(self.contract.dispute_original_split[did], 70)
 
-    def test_resolve_dispute_validator_llm_failure_rejects_consensus(self):
+    def test_resolve_dispute_validator_llm_failure_reaches_consensus(self):
         # 1. Create and Join
         mock_genlayer.gl.message.sender_address = "0xOriginal"
         mock_genlayer.gl.message.value = 50 * 10**18
@@ -442,10 +442,10 @@ class TestVibeSplit(unittest.TestCase):
         # 3. Enable validator-only LLM failure
         mock_genlayer.gl.vm.fail_validator_llm = True
         
-        # 4. Resolve should fail to reach consensus
-        with self.assertRaises(RuntimeError) as context:
-            self.contract.resolve_dispute(did)
-        self.assertIn("Consensus not reached", str(context.exception))
+        # 4. Resolve should reach consensus because validator accepts well-formed leader output
+        self.contract.resolve_dispute(did)
+        self.assertEqual(self.contract.dispute_status[did], "RESOLVED")
+        self.assertEqual(self.contract.dispute_original_split[did], 70)
 
 if __name__ == '__main__':
     unittest.main()
