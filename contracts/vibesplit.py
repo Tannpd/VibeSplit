@@ -270,7 +270,13 @@ Do NOT wrap the JSON in markdown code blocks. Do NOT add any extra text or conve
             the validator accepts the leader's output as long as it is well-formed.
             """
             try:
-                leader_data = json.loads(leader_result)
+                # Robustly extract JSON substring to bypass any GenVM ABI serialization prefix bytes (e.g. \x00\xbc.)
+                start_idx = leader_result.find('{')
+                end_idx = leader_result.rfind('}')
+                if start_idx == -1 or end_idx == -1 or start_idx > end_idx:
+                    return False
+                cleaned_result = leader_result[start_idx:end_idx+1]
+                leader_data = json.loads(cleaned_result)
             except Exception:
                 return False
 
