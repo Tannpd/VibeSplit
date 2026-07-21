@@ -49,7 +49,7 @@ Unlike naive contract validators that only verify JSON formatting, VibeSplit enf
 
 ## Deployment Evidence
 
-- **Contract Address**: `0xc7fe2C750756b07DA54a95AEC7D741F0D9554698`
+- **Contract Address**: `0x8F0Ba7fE672FD44305d4187DEcD5E81CA5366eC2`
 - **Network**: `studionet`
 
 ### Worked Example Call

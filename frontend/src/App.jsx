@@ -133,6 +133,32 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* GLOBAL RETRO LOADING OVERLAY */}
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-card">
+            <div className="spinner-container">
+              <div className="vinyl-spinner">
+                <Music size={40} className="vinyl-icon" />
+              </div>
+              <div className="pulsing-glow"></div>
+            </div>
+            <h3 className="loading-title">GenVM Processing...</h3>
+            <p className="loading-status">{txStatus || 'Analyzing audio files & syncing network state...'}</p>
+            {txHash && (
+              <div className="loading-txhash">
+                <span>Tx Hash:</span>
+                <code>{txHash.substring(0, 12)}...{txHash.substring(txHash.length - 10)}</code>
+              </div>
+            )}
+            <div className="loading-bar">
+              <div className="loading-progress"></div>
+            </div>
+            <span className="loading-tip">Do not close this tab. AI consensus rounds can take 15-30 seconds.</span>
+          </div>
+        </div>
+      )}
+
       {/* SYNTHWAVE RETRO HEADER */}
       <header className="synth-header">
         <div className="synth-super">GenLayer Forensic Lab</div>
